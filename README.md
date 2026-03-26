@@ -11,6 +11,9 @@ TODO: Update scripts and write a GitHub Actions script to warn me if it breaks a
 * https://docs.docker.com/installation
 * https://docs.docker.com/compose/install/
 
+> **Note**
+> These images are only published for `linux/amd64`. On Apple Silicon (M1/M2/M3/M4), Docker will emulate them. The `docker-compose.yml` already pins `platform: linux/amd64`.
+
 ```bash
 
 git clone https://github.com/stabenfeldt/elastic-mongo.git
@@ -40,5 +43,10 @@ mongosh 0.0.0.0:27017
 ### Log into a container
 ```
 docker-compose exec transporter bash
+```
+
+### Verify MongoDB → Elasticsearch sync
+```bash
+docker-compose run --rm verify
 ```
   

@@ -1,5 +1,5 @@
 var source = mongodb({
-  uri: "mongodb://mongo1:28017/harvester-test",
+  uri: "mongodb://mongo1:27017/harvester-test",
   // uri: "https://username:password@hostname:port/INDEX_NAME",
 
   // "timeout": "30s",

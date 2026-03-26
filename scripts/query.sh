@@ -16,18 +16,17 @@ ES=`ping -c 1 elasticsearch | head -1  | cut -d "(" -f 2 | cut -d ")" -f 1`
 
 echo "================================="
 echo "Writing to MongoDB"
-mongo ${MONGODB1} <<EOF
-  use harvester-test
-  rs.config()
-  var p = {title: "Breaking news", content: "It's not summer yet."}
-  db.entries.save(p)
-EOF
+mongo --quiet ${MONGODB1}:27017/harvester-test --eval '
+  rs.config();
+  db.entries.insertOne({title: "Breaking news", content: "It\"s not summer yet."});
+'
 
 
 echo "================================="
 echo "Fetching data from Mongo"
-echo curl http://${MONGODB1}:28017/harvester-test/entries/?limit=10
-curl http://${MONGODB1}:28017/harvester-test/entries/?limit=10
+mongo --quiet ${MONGODB1}:27017/harvester-test --eval '
+  printjson(db.entries.find().limit(10).toArray());
+'
 echo "================================="
 
 
@@ -43,7 +42,7 @@ done
 printf "\nTransporter started \n\n"
 
 printf "\nReading from Elasticsearch\n\n"
-curl -XGET "http://elasticsearch:9200/harvester-test/_search?pretty&q=*:*"
+curl -XGET "http://elasticsearch:9200/_search?pretty&q=*:*"
 
 
 echo "================================="

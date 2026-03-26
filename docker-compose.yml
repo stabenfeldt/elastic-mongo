@@ -1,9 +1,8 @@
-version: "3"
-
 services:
   mongo3:
     hostname: mongo3
-    image: mongo:3.0.6
+    image: percona/percona-server-mongodb:3.6.19-7.0
+    platform: linux/amd64
     entrypoint:
       [
         "/usr/bin/mongod",
@@ -11,7 +10,7 @@ services:
         "rs",
         "--journal",
         "--smallfiles",
-        "--rest",
+        "--bind_ip_all",
       ]
     ports:
       - "27018:27017"
@@ -20,7 +19,8 @@ services:
 
   mongo2:
     hostname: mongo2
-    image: mongo:3.0.6
+    image: percona/percona-server-mongodb:3.6.19-7.0
+    platform: linux/amd64
     entrypoint:
       [
         "/usr/bin/mongod",
@@ -28,7 +28,7 @@ services:
         "rs",
         "--journal",
         "--smallfiles",
-        "--rest",
+        "--bind_ip_all",
       ]
     ports:
       - "27019:27017"
@@ -37,7 +37,8 @@ services:
 
   mongo1:
     hostname: mongo1
-    image: mongo:3.0.6
+    image: percona/percona-server-mongodb:3.6.19-7.0
+    platform: linux/amd64
     entrypoint:
       [
         "/usr/bin/mongod",
@@ -45,7 +46,7 @@ services:
         "rs",
         "--journal",
         "--smallfiles",
-        "--rest",
+        "--bind_ip_all",
       ]
     ports:
       - "27017:27017"
@@ -57,7 +58,8 @@ services:
 
   elasticsearch:
     hostname: elasticsearch
-    image: elasticsearch:7.17.4
+    image: elasticsearch:5.6.16
+    platform: linux/amd64
     environment:
       - discovery.type=single-node
     ports:
@@ -73,7 +75,12 @@ services:
 
   # This configures the MongoDB replicaset
   mongosetup:
-    image: mongo:3.0.6
+    image: percona/percona-server-mongodb:3.6.19-7.0
+    platform: linux/amd64
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
     links:
       - mongo1:mongo1
       - mongo2:mongo2
@@ -86,39 +93,31 @@ services:
   # Make sure you include either mongo-connector OR transporter.
   ###################################################################
 
-  # mongo-connector
-  # https://github.com/10gen-labs/mongo-connector
-  connector:
-    image: python:latest
+  transporter:
+    image: golang:1.18.3
+    platform: linux/amd64
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+      - elasticsearch
     links:
       - mongo1:mongo1
       - mongo2:mongo2
       - mongo3:mongo3
       - elasticsearch:elasticsearch
     volumes:
+      - ./transporter:/transporter
       - ./scripts:/scripts
-    entrypoint: ["/scripts/mongo-connector.sh"]
-
-  # Transporter
-  #
-  # https://github.com/compose/transporter
-  # https://www.compose.io/articles/transporter-driving-part-one/
-  #transporter:
-  #  image: golang:1.18.3
-  #  links:
-  #    - mongo1:mongo1
-  #    - mongo2:mongo2
-  #    - mongo3:mongo3
-  #    - elasticsearch:elasticsearch
-  #  volumes:
-  #    - ./transporter:/transporter
-  #    - ./scripts:/scripts
-  #  entrypoint: ["/transporter/run.sh"]
-  #  restart: "no"
+    entrypoint: ["/transporter/run.sh"]
+    restart: "no"
 
   # Make sure ES does not rellocate it's shards when it has low disk space.
   disabledisktreshold:
-    image: mongo:3.0.6
+    image: percona/percona-server-mongodb:3.6.19-7.0
+    platform: linux/amd64
+    depends_on:
+      - elasticsearch
     links:
       - elasticsearch:elasticsearch
     volumes:
@@ -131,7 +130,13 @@ services:
     # That works even though the container has stopped.
 
   verify:
-    image: mongo:3.0.6
+    image: percona/percona-server-mongodb:3.6.19-7.0
+    platform: linux/amd64
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+      - elasticsearch
     links:
       - mongo1:mongo1
       - mongo2:mongo2
