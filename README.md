@@ -1,9 +1,7 @@
 # Elastic Mongo
 **Docker setup to get Elasticsearch and MongoDB up and running**
 
-This repo has not been maintained for a few years. 
-TODO: Update scripts and write a GitHub Actions script to warn me if it breaks again.
-
+UPDATE: Updated deps. so that everything runs again. 🎉
 
 
 ### Install Docker and docker-compose
